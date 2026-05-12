@@ -38,20 +38,21 @@ BarangayManager.prototype.renderCertificates = function() {
 
 
 BarangayManager.prototype.saveCertificate = async function() {
-        const id = document.getElementById('certificateId').value || Date.now();
+        const rawId = document.getElementById('certificateId').value;
+        const id = rawId ? parseInt(rawId, 10) : null;
         const residentSelect = document.getElementById('certificateResident');
         const residentName = residentSelect.options[residentSelect.selectedIndex].dataset.name;
         
         const certificate = {
-            id: parseInt(id),
             residentId: parseInt(residentSelect.value),
             residentName: residentName,
             type: document.getElementById('certificateType').value,
             date: document.getElementById('certificateDate').value,
             status: this.currentUserRole === 'user' ? 'Pending' : document.getElementById('certificateStatus').value
         };
+        if (id) certificate.id = id;
 
-        const index = this.certificates.findIndex(c => c.id === parseInt(id));
+        const index = id ? this.certificates.findIndex(c => c.id === id) : -1;
         const isExisting = index > -1;
         const savedCertificate = await this.persistRecord('certificates', certificate);
         if (!savedCertificate) return;

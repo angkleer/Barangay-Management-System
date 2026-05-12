@@ -39,12 +39,12 @@ BarangayManager.prototype.renderAppointments = function() {
 
 
 BarangayManager.prototype.saveAppointment = async function() {
-        const id = document.getElementById('appointmentId').value || Date.now();
+        const rawId = document.getElementById('appointmentId').value;
+        const id = rawId ? parseInt(rawId, 10) : null;
         const residentSelect = document.getElementById('appointmentResident');
         const residentName = residentSelect.options[residentSelect.selectedIndex].dataset.name;
         
         const appointment = {
-            id: parseInt(id),
             residentId: parseInt(residentSelect.value),
             residentName: residentName,
             date: document.getElementById('appointmentDate').value,
@@ -52,8 +52,9 @@ BarangayManager.prototype.saveAppointment = async function() {
             purpose: document.getElementById('appointmentPurpose').value,
             status: this.currentUserRole === 'user' ? 'Scheduled' : document.getElementById('appointmentStatus').value
         };
+        if (id) appointment.id = id;
 
-        const index = this.appointments.findIndex(a => a.id === parseInt(id));
+        const index = id ? this.appointments.findIndex(a => a.id === id) : -1;
         const isExisting = index > -1;
         const savedAppointment = await this.persistRecord('appointments', appointment);
         if (!savedAppointment) return;

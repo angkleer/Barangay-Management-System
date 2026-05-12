@@ -29,12 +29,14 @@ BarangayManager.prototype.renderAnnouncements = function() {
 
 BarangayManager.prototype.saveAnnouncement = async function() {
         const rawId = document.getElementById('announcementId').value;
-        const id = rawId ? parseInt(rawId, 10) : Date.now();
+        const id = rawId ? parseInt(rawId, 10) : null;
         const title = document.getElementById('announcementTitle').value.trim();
         const content = document.getElementById('announcementContent').value.trim();
-        const index = this.announcements.findIndex(a => a.id === id);
+        const index = id ? this.announcements.findIndex(a => a.id === id) : -1;
         const isExisting = index > -1;
-        const savedAnnouncement = await this.persistRecord('announcements', { id, title, content });
+        const announcement = { title, content };
+        if (id) announcement.id = id;
+        const savedAnnouncement = await this.persistRecord('announcements', announcement);
         if (!savedAnnouncement) return;
 
         if (isExisting) {

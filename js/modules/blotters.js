@@ -38,9 +38,9 @@ BarangayManager.prototype.renderBlotters = function() {
 
 
 BarangayManager.prototype.saveBlotter = async function() {
-        const id = document.getElementById('blotterId').value || Date.now();
+        const rawId = document.getElementById('blotterId').value;
+        const id = rawId ? parseInt(rawId, 10) : null;
         const blotter = {
-            id: parseInt(id),
             complainant: this.currentUserRole === 'user'
                 ? (this.currentUser?.fullName || document.getElementById('blotterComplainant').value)
                 : document.getElementById('blotterComplainant').value,
@@ -49,8 +49,9 @@ BarangayManager.prototype.saveBlotter = async function() {
             description: document.getElementById('blotterDescription').value,
             status: this.currentUserRole === 'user' ? 'Open' : document.getElementById('blotterStatus').value
         };
+        if (id) blotter.id = id;
 
-        const index = this.blotters.findIndex(b => b.id === parseInt(id));
+        const index = id ? this.blotters.findIndex(b => b.id === id) : -1;
         const isExisting = index > -1;
         const savedBlotter = await this.persistRecord('blotters', blotter);
         if (!savedBlotter) return;

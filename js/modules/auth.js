@@ -80,9 +80,7 @@ BarangayManager.prototype.handleUserSignup = async function() {
             errorEl.textContent = 'Email address is already registered.';
             return;
         }
-        const userId = Date.now();
         const newUser = {
-            id: userId,
             fullName,
             username,
             email,
@@ -126,7 +124,6 @@ BarangayManager.prototype.handleUserSignup = async function() {
             this.residents[existingResidentIndex] = savedResident;
         } else {
             const residentRecord = {
-                id: savedUser.id,
                 userId: savedUser.id,
                 name: fullName,
                 age: this.calculateAge(birthdate),

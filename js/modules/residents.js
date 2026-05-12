@@ -157,8 +157,9 @@ BarangayManager.prototype.openResidentModal = function(resident = null) {
 
 
 BarangayManager.prototype.saveResident = async function() {
-        const id = document.getElementById('residentId').value || Date.now();
-        const existingResident = this.residents.find(r => r.id === parseInt(id));
+        const rawId = document.getElementById('residentId').value;
+        const id = rawId ? parseInt(rawId, 10) : null;
+        const existingResident = id ? this.residents.find(r => r.id === id) : null;
         const residentName = document.getElementById('residentName').value;
         const matchedUser = this.users.find(user =>
             user.id === existingResident?.userId ||
@@ -179,7 +180,6 @@ BarangayManager.prototype.saveResident = async function() {
         }
 
         const resident = {
-            id: parseInt(id),
             userId: existingResident?.userId || matchedUser?.id || '',
             name: residentName,
             age: parseInt(document.getElementById('residentAge').value),
@@ -198,8 +198,9 @@ BarangayManager.prototype.saveResident = async function() {
                 ? (existingResident?.verifiedAt || new Date().toISOString())
                 : ''
         };
+        if (id) resident.id = id;
 
-        const index = this.residents.findIndex(r => r.id === parseInt(id));
+        const index = id ? this.residents.findIndex(r => r.id === id) : -1;
         const isExisting = index > -1;
         const savedResident = await this.persistRecord('residents', resident);
         if (!savedResident) return;

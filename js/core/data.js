@@ -79,14 +79,28 @@ BarangayManager.prototype.loadAllData = async function() {
 BarangayManager.prototype.persistRecord = async function(key, record) {
         const normalizedRecord = this.normalizeRecord({ ...record });
         const client = this.getSupabaseClient();
+        const hasExistingId = normalizedRecord.id !== undefined && normalizedRecord.id !== null && normalizedRecord.id !== '';
 
         if (client) {
             try {
-                const { data, error } = await client
-                    .from(this.getTableNameForKey(key))
-                    .upsert(normalizedRecord)
-                    .select()
-                    .single();
+                let result;
+
+                if (hasExistingId) {
+                    result = await client
+                        .from(this.getTableNameForKey(key))
+                        .upsert(normalizedRecord)
+                        .select()
+                        .single();
+                } else {
+                    delete normalizedRecord.id;
+                    result = await client
+                        .from(this.getTableNameForKey(key))
+                        .insert(normalizedRecord)
+                        .select()
+                        .single();
+                }
+
+                const { data, error } = result;
 
                 if (error) {
                     throw error;
@@ -97,6 +111,10 @@ BarangayManager.prototype.persistRecord = async function(key, record) {
                 this.reportDataError(`save ${key}`, error);
                 return null;
             }
+        }
+
+        if (!hasExistingId) {
+            delete normalizedRecord.id;
         }
 
         return normalizedRecord;
@@ -465,7 +483,6 @@ BarangayManager.prototype.calculateAge = function(birthdate) {
 BarangayManager.prototype.logActivity = async function(type, title, detail) {
         const createdAt = new Date();
         const activity = {
-            id: Date.now() + Math.floor(Math.random() * 1000),
             type,
             title,
             detail,
