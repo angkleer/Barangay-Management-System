@@ -1,0 +1,100 @@
+/* Authentication page styles */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.login-card {
+    background: white;
+    padding: 3rem;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 720px;
+    text-align: center;
+    animation: slideUp 0.8s ease-out;
+}
+
+.back-to-welcome-btn {
+    width: auto;
+    border: none;
+    background: transparent;
+    color: #0f766e;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0;
+    cursor: pointer;
+}
+
+.back-to-welcome-btn:hover {
+    color: #0b5d57;
+    background: transparent;
+}
+
+
+    }
+}
+
+.login-card h1 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+}
+
+.login-card p {
+    color: #7f8c8d;
+    margin-bottom: 2rem;
+}
+
+.auth-tabs {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.auth-tab {
+    border: 1px solid #d8e5e3;
+    background: #f7fbfa;
+    color: #4b5563;
+    padding: 0.8rem 1rem;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+.auth-tab.active {
+    background: #0f766e;
+    color: #fff;
+    border-color: #0f766e;
+}
+
+.auth-panel {
+    display: none;
+    text-align: left;
+}
+
+.auth-panel.active {
+    display: block;
+}
+
+.auth-submit {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.25rem;
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
