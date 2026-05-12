@@ -14,6 +14,11 @@ BarangayManager.prototype.getSupabaseClient = function() {
     }
 
 
+BarangayManager.prototype.requiresSupabase = function() {
+        return window.BMS_REQUIRE_SUPABASE !== false;
+    }
+
+
 BarangayManager.prototype.getDataKeys = function() {
         return ['users', 'residents', 'certificates', 'blotters', 'appointments', 'announcements', 'activities'];
     }
@@ -50,6 +55,9 @@ BarangayManager.prototype.loadCollection = async function(key) {
         const client = this.getSupabaseClient();
 
         if (!client) {
+            if (this.requiresSupabase()) {
+                this.reportDataError(`load ${key}`, new Error('Supabase client is not available.'));
+            }
             this[key] = fallback;
             return fallback;
         }
@@ -80,6 +88,11 @@ BarangayManager.prototype.persistRecord = async function(key, record) {
         const normalizedRecord = this.normalizeRecord({ ...record });
         const client = this.getSupabaseClient();
         const hasExistingId = normalizedRecord.id !== undefined && normalizedRecord.id !== null && normalizedRecord.id !== '';
+
+        if (!client && this.requiresSupabase()) {
+            this.reportDataError(`save ${key}`, new Error('Supabase client is not available.'));
+            return null;
+        }
 
         if (client) {
             try {
@@ -124,7 +137,14 @@ BarangayManager.prototype.persistRecord = async function(key, record) {
 BarangayManager.prototype.removeRecord = async function(key, id) {
         const client = this.getSupabaseClient();
 
-        if (!client) return true;
+        if (!client) {
+            if (this.requiresSupabase()) {
+                this.reportDataError(`delete ${key}`, new Error('Supabase client is not available.'));
+                return false;
+            }
+
+            return true;
+        }
 
         try {
             const { error } = await client
