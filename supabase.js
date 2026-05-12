@@ -146,15 +146,15 @@ function createRestSupabaseClient(baseUrl, apiKey) {
     };
 }
 
-let supabase = null;
+let supabaseClientInstance = null;
 
 if (window.supabase && typeof window.supabase.createClient === 'function') {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    supabaseClientInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 } else {
     console.warn('Supabase CDN client not detected. Falling back to REST client.');
-    supabase = createRestSupabaseClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    supabaseClientInstance = createRestSupabaseClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 }
 
 window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_PUBLISHABLE_KEY = SUPABASE_PUBLISHABLE_KEY;
-window.supabaseClient = supabase;
+window.supabaseClient = supabaseClientInstance;
