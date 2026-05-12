@@ -1,12 +1,11 @@
 const SUPABASE_URL = 'https://vtoadnujpxsiruwmtvlm.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_fYr8fGD0hRXOBktlBy-q-Q_CnLrBQ5y';
+const SUPABASE_ANON_KEY = 'sb_publishable_fYr8fGD0hRXOBktlBy-q-Q_CnLrBQ5y';
 
-if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-    throw new Error('Supabase client library failed to load. Make sure the CDN script is included before supabase.js.');
+if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+    window.supabaseClient = window.supabase.createClient(
+        window.SUPABASE_URL,
+        window.SUPABASE_ANON_KEY
+    );
+} else {
+    console.warn('Supabase client was not initialized. Check supabase.js configuration.');
 }
-
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
-window.SUPABASE_URL = SUPABASE_URL;
-window.SUPABASE_PUBLISHABLE_KEY = SUPABASE_PUBLISHABLE_KEY;
-window.supabaseClient = supabase;
