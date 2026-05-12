@@ -37,7 +37,7 @@ BarangayManager.prototype.renderBlotters = function() {
     }
 
 
-BarangayManager.prototype.saveBlotter = function() {
+BarangayManager.prototype.saveBlotter = async function() {
         const id = document.getElementById('blotterId').value || Date.now();
         const blotter = {
             id: parseInt(id),
@@ -52,20 +52,21 @@ BarangayManager.prototype.saveBlotter = function() {
 
         const index = this.blotters.findIndex(b => b.id === parseInt(id));
         const isExisting = index > -1;
+        const savedBlotter = await this.persistRecord('blotters', blotter);
+        if (!savedBlotter) return;
         if (index > -1) {
-            this.blotters[index] = blotter;
+            this.blotters[index] = savedBlotter;
         } else {
-            this.blotters.push(blotter);
+            this.blotters.push(savedBlotter);
         }
 
         this.saveToStorage('blotters', this.blotters);
-        this.logActivity(
+        await this.logActivity(
             isExisting ? 'blotter-update' : 'blotter-create',
-            blotter.complainant,
-            `${isExisting ? 'Updated' : 'Created'} blotter record against ${blotter.respondent}.`
+            savedBlotter.complainant,
+            `${isExisting ? 'Updated' : 'Created'} blotter record against ${savedBlotter.respondent}.`
         );
-        this.renderBlotters();
-        this.updateDashboard();
+        this.refreshViewsAfterDataChange('blotters');
         this.closeAllModals();
     }
 
@@ -82,14 +83,14 @@ BarangayManager.prototype.editBlotter = function(id) {
     }
 
 
-BarangayManager.prototype.deleteBlotter = function(id) {
+BarangayManager.prototype.deleteBlotter = async function(id) {
         if (confirm('Delete this blotter record?')) {
             const blotter = this.blotters.find(b => b.id === id);
-            this.blotters = this.blotters.filter(b => b.id !== id);
-            this.saveToStorage('blotters', this.blotters);
-            if (blotter) this.logActivity('blotter-delete', blotter.complainant, `Blotter record against ${blotter.respondent} deleted.`);
-            this.renderBlotters();
-            this.updateDashboard();
+            const removed = await this.removeRecord('blotters', id);
+            if (!removed) return;
+            this.deleteCollectionItem('blotters', id);
+            if (blotter) await this.logActivity('blotter-delete', blotter.complainant, `Blotter record against ${blotter.respondent} deleted.`);
+            this.refreshViewsAfterDataChange('blotters');
         }
     }
 

@@ -50,9 +50,8 @@ BarangayManager.prototype.resetAuthForms = function() {
     }
 
 
-BarangayManager.prototype.init = function() {
-        this.loadAllData();
-        this.removeLegacySampleData();
+BarangayManager.prototype.init = async function() {
+        await this.loadAllData();
         this.normalizeVerificationRecords();
         this.bindEvents();
         this.renderPublicAnnouncements();

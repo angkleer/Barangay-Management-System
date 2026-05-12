@@ -156,7 +156,7 @@ BarangayManager.prototype.openResidentModal = function(resident = null) {
     }
 
 
-BarangayManager.prototype.saveResident = function() {
+BarangayManager.prototype.saveResident = async function() {
         const id = document.getElementById('residentId').value || Date.now();
         const existingResident = this.residents.find(r => r.id === parseInt(id));
         const residentName = document.getElementById('residentName').value;
@@ -201,21 +201,22 @@ BarangayManager.prototype.saveResident = function() {
 
         const index = this.residents.findIndex(r => r.id === parseInt(id));
         const isExisting = index > -1;
+        const savedResident = await this.persistRecord('residents', resident);
+        if (!savedResident) return;
         if (index > -1) {
-            this.residents[index] = resident;
+            this.residents[index] = savedResident;
         } else {
-            this.residents.push(resident);
+            this.residents.push(savedResident);
         }
 
         this.saveToStorage('residents', this.residents);
-        this.syncResidentToLinkedUser(resident);
-        this.logActivity(
+        await this.syncResidentToLinkedUser(savedResident);
+        await this.logActivity(
             isExisting ? 'resident-update' : 'resident-create',
-            resident.name,
+            savedResident.name,
             isExisting ? 'Resident record updated.' : 'New resident record added.'
         );
-        this.renderResidents();
-        this.updateDashboard();
+        this.refreshViewsAfterDataChange('residents');
         this.closeAllModals();
     }
 
@@ -226,7 +227,7 @@ BarangayManager.prototype.editResident = function(id) {
     }
 
 
-BarangayManager.prototype.markResidentVerified = function(id) {
+BarangayManager.prototype.markResidentVerified = async function(id) {
         const residentIndex = this.residents.findIndex(r => r.id === id);
         if (residentIndex === -1) return;
 
@@ -236,23 +237,24 @@ BarangayManager.prototype.markResidentVerified = function(id) {
             verifiedAt: new Date().toISOString()
         };
 
-        this.residents[residentIndex] = resident;
+        const savedResident = await this.persistRecord('residents', resident);
+        if (!savedResident) return;
+        this.residents[residentIndex] = savedResident;
         this.saveToStorage('residents', this.residents);
-        this.syncResidentToLinkedUser(resident);
-        this.logActivity('resident-verify', resident.name, 'Resident identity verified after face-to-face document checking.');
-        this.renderResidents();
-        this.updateDashboard();
+        await this.syncResidentToLinkedUser(savedResident);
+        await this.logActivity('resident-verify', savedResident.name, 'Resident identity verified after face-to-face document checking.');
+        this.refreshViewsAfterDataChange('residents');
     }
 
 
-BarangayManager.prototype.deleteResident = function(id) {
+BarangayManager.prototype.deleteResident = async function(id) {
         if (confirm('Are you sure you want to delete this resident?')) {
             const resident = this.residents.find(r => r.id === id);
-            this.residents = this.residents.filter(r => r.id !== id);
-            this.saveToStorage('residents', this.residents);
-            if (resident) this.logActivity('resident-delete', resident.name, 'Resident record deleted.');
-            this.renderResidents();
-            this.updateDashboard();
+            const removed = await this.removeRecord('residents', id);
+            if (!removed) return;
+            this.deleteCollectionItem('residents', id);
+            if (resident) await this.logActivity('resident-delete', resident.name, 'Resident record deleted.');
+            this.refreshViewsAfterDataChange('residents');
         }
     }
 

@@ -9,14 +9,168 @@ BarangayManager.prototype.loadFromStorage = function(key) {
     }
 
 
-BarangayManager.prototype.loadAllData = function() {
-        this.users = this.loadFromStorage('users');
-        this.residents = this.loadFromStorage('residents');
-        this.certificates = this.loadFromStorage('certificates');
-        this.blotters = this.loadFromStorage('blotters');
-        this.appointments = this.loadFromStorage('appointments');
-        this.announcements = this.loadFromStorage('announcements');
-        this.activities = this.loadFromStorage('activities');
+BarangayManager.prototype.getSupabaseClient = function() {
+        return window.supabaseClient || null;
+    }
+
+
+BarangayManager.prototype.getDataKeys = function() {
+        return ['users', 'residents', 'certificates', 'blotters', 'appointments', 'announcements', 'activities'];
+    }
+
+
+BarangayManager.prototype.getTableNameForKey = function(key) {
+        const map = window.BMS_SUPABASE_TABLES || {};
+        return map[key] || window[`BMS_SUPABASE_${key.toUpperCase()}_TABLE`] || key;
+    }
+
+
+BarangayManager.prototype.normalizeRecord = function(record) {
+        if (!record || typeof record !== 'object') return record;
+
+        if (record.id !== undefined && record.id !== null && record.id !== '') {
+            const numericId = Number(record.id);
+            if (!Number.isNaN(numericId)) {
+                record.id = numericId;
+            }
+        }
+
+        return record;
+    }
+
+
+BarangayManager.prototype.reportDataError = function(action, error) {
+        console.error(`Supabase failed to ${action}:`, error);
+        alert(`Supabase could not ${action}: ${error.message}`);
+    }
+
+
+BarangayManager.prototype.loadCollection = async function(key) {
+        const fallback = this.loadFromStorage(key);
+        const client = this.getSupabaseClient();
+
+        if (!client) {
+            this[key] = fallback;
+            return fallback;
+        }
+
+        const { data, error } = await client
+            .from(this.getTableNameForKey(key))
+            .select('*');
+
+        if (error) {
+            console.error(`Failed to load ${key} from Supabase:`, error);
+            this[key] = fallback;
+            return fallback;
+        }
+
+        const records = (data || []).map(record => this.normalizeRecord(record));
+        this[key] = records;
+        this.saveToStorage(key, records);
+        return records;
+    }
+
+
+BarangayManager.prototype.loadAllData = async function() {
+        await Promise.all(this.getDataKeys().map(key => this.loadCollection(key)));
+    }
+
+
+BarangayManager.prototype.persistRecord = async function(key, record) {
+        const normalizedRecord = this.normalizeRecord({ ...record });
+        const client = this.getSupabaseClient();
+
+        if (client) {
+            try {
+                const { data, error } = await client
+                    .from(this.getTableNameForKey(key))
+                    .upsert(normalizedRecord)
+                    .select()
+                    .single();
+
+                if (error) {
+                    throw error;
+                }
+
+                return this.normalizeRecord(data);
+            } catch (error) {
+                this.reportDataError(`save ${key}`, error);
+                return null;
+            }
+        }
+
+        return normalizedRecord;
+    }
+
+
+BarangayManager.prototype.removeRecord = async function(key, id) {
+        const client = this.getSupabaseClient();
+
+        if (!client) return true;
+
+        try {
+            const { error } = await client
+                .from(this.getTableNameForKey(key))
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                throw error;
+            }
+
+            return true;
+        } catch (error) {
+            this.reportDataError(`delete ${key}`, error);
+            return false;
+        }
+    }
+
+
+BarangayManager.prototype.replaceCollectionItem = function(key, record) {
+        const index = this[key].findIndex(item => Number(item.id) === Number(record.id));
+        if (index > -1) {
+            this[key][index] = record;
+        } else {
+            this[key].push(record);
+        }
+
+        this.saveToStorage(key, this[key]);
+    }
+
+
+BarangayManager.prototype.deleteCollectionItem = function(key, id) {
+        this[key] = this[key].filter(item => Number(item.id) !== Number(id));
+        this.saveToStorage(key, this[key]);
+    }
+
+
+BarangayManager.prototype.refreshViewsAfterDataChange = function(key) {
+        if (key === 'announcements') {
+            this.renderPublicAnnouncements();
+        }
+
+        if (!this.isAppPage() || !document.getElementById('app')) {
+            return;
+        }
+
+        const viewMap = {
+            residents: 'renderResidents',
+            certificates: 'renderCertificates',
+            blotters: 'renderBlotters',
+            appointments: 'renderAppointments',
+            announcements: 'renderAnnouncements'
+        };
+
+        const viewMethod = viewMap[key];
+        if (viewMethod && typeof this[viewMethod] === 'function') {
+            this[viewMethod]();
+        }
+
+        if (key === 'residents') {
+            this.populateResidentDropdowns();
+        }
+
+        this.updateDashboard();
     }
 
 
@@ -85,6 +239,17 @@ BarangayManager.prototype.renderPublicAnnouncements = function() {
                 </article>
             `).join('')
             : '<div class="empty-feed public-empty-feed">No announcements posted yet. Please check back later.</div>';
+    }
+
+
+BarangayManager.prototype.refreshAnnouncementViews = function() {
+        this.saveToStorage('announcements', this.announcements);
+        this.renderPublicAnnouncements();
+
+        if (this.isAppPage()) {
+            this.renderAnnouncements();
+            this.updateDashboard();
+        }
     }
 
 
@@ -190,7 +355,7 @@ BarangayManager.prototype.syncCurrentUserSession = function(user) {
     }
 
 
-BarangayManager.prototype.syncResidentToLinkedUser = function(resident) {
+BarangayManager.prototype.syncResidentToLinkedUser = async function(resident) {
         const userIndex = this.users.findIndex(user =>
             user.id === resident.userId ||
             user.fullName?.toLowerCase() === resident.name.toLowerCase()
@@ -212,9 +377,11 @@ BarangayManager.prototype.syncResidentToLinkedUser = function(resident) {
             verifiedAt: resident.verifiedAt || ''
         };
 
-        this.users[userIndex] = updatedUser;
+        const savedUser = await this.persistRecord('users', updatedUser);
+        if (!savedUser) return;
+        this.users[userIndex] = savedUser;
         this.saveToStorage('users', this.users);
-        this.syncCurrentUserSession(updatedUser);
+        this.syncCurrentUserSession(savedUser);
     }
 
 
@@ -295,17 +462,24 @@ BarangayManager.prototype.calculateAge = function(birthdate) {
     }
 
 
-BarangayManager.prototype.logActivity = function(type, title, detail) {
+BarangayManager.prototype.logActivity = async function(type, title, detail) {
         const createdAt = new Date();
-        this.activities.push({
+        const activity = {
             id: Date.now() + Math.floor(Math.random() * 1000),
             type,
             title,
             detail,
             createdAt: createdAt.toISOString(),
             createdAtDisplay: createdAt.toLocaleString()
-        });
-        this.saveToStorage('activities', this.activities);
+        };
+        const savedActivity = await this.persistRecord('activities', activity);
+        if (savedActivity) {
+            this.replaceCollectionItem('activities', savedActivity);
+        } else {
+            this.activities.push(activity);
+            this.saveToStorage('activities', this.activities);
+        }
+        this.refreshViewsAfterDataChange('activities');
     }
 
     // Residents CRUD

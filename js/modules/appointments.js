@@ -38,7 +38,7 @@ BarangayManager.prototype.renderAppointments = function() {
     }
 
 
-BarangayManager.prototype.saveAppointment = function() {
+BarangayManager.prototype.saveAppointment = async function() {
         const id = document.getElementById('appointmentId').value || Date.now();
         const residentSelect = document.getElementById('appointmentResident');
         const residentName = residentSelect.options[residentSelect.selectedIndex].dataset.name;
@@ -55,20 +55,21 @@ BarangayManager.prototype.saveAppointment = function() {
 
         const index = this.appointments.findIndex(a => a.id === parseInt(id));
         const isExisting = index > -1;
+        const savedAppointment = await this.persistRecord('appointments', appointment);
+        if (!savedAppointment) return;
         if (index > -1) {
-            this.appointments[index] = appointment;
+            this.appointments[index] = savedAppointment;
         } else {
-            this.appointments.push(appointment);
+            this.appointments.push(savedAppointment);
         }
 
         this.saveToStorage('appointments', this.appointments);
-        this.logActivity(
+        await this.logActivity(
             isExisting ? 'appointment-update' : 'appointment-create',
             residentName,
-            `${isExisting ? 'Updated' : 'Created'} appointment for ${appointment.date} at ${appointment.time}.`
+            `${isExisting ? 'Updated' : 'Created'} appointment for ${savedAppointment.date} at ${savedAppointment.time}.`
         );
-        this.renderAppointments();
-        this.updateDashboard();
+        this.refreshViewsAfterDataChange('appointments');
         this.closeAllModals();
     }
 
@@ -85,14 +86,14 @@ BarangayManager.prototype.editAppointment = function(id) {
     }
 
 
-BarangayManager.prototype.deleteAppointment = function(id) {
+BarangayManager.prototype.deleteAppointment = async function(id) {
         if (confirm('Delete this appointment?')) {
             const appointment = this.appointments.find(a => a.id === id);
-            this.appointments = this.appointments.filter(a => a.id !== id);
-            this.saveToStorage('appointments', this.appointments);
-            if (appointment) this.logActivity('appointment-delete', appointment.residentName, `Appointment on ${appointment.date} at ${appointment.time} deleted.`);
-            this.renderAppointments();
-            this.updateDashboard();
+            const removed = await this.removeRecord('appointments', id);
+            if (!removed) return;
+            this.deleteCollectionItem('appointments', id);
+            if (appointment) await this.logActivity('appointment-delete', appointment.residentName, `Appointment on ${appointment.date} at ${appointment.time} deleted.`);
+            this.refreshViewsAfterDataChange('appointments');
         }
     }
 

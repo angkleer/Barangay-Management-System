@@ -1,4 +1,4 @@
-BarangayManager.prototype.handleLogin = function() {
+BarangayManager.prototype.handleLogin = async function() {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
         const errorEl = document.getElementById('loginError');
@@ -16,7 +16,7 @@ BarangayManager.prototype.handleLogin = function() {
             localStorage.setItem('bms_session_user', JSON.stringify(this.currentUser));
             this.updateRoleUI();
             this.showApp();
-            this.loadAllData();
+            await this.loadAllData();
             this.updateDashboard();
             this.renderAllPages();
             return;
@@ -45,7 +45,7 @@ BarangayManager.prototype.handleLogin = function() {
     }
 
 
-BarangayManager.prototype.handleUserSignup = function() {
+BarangayManager.prototype.handleUserSignup = async function() {
         const defaultAddress = 'Brgy. Biasong, Loon, Bohol';
         const fullName = document.getElementById('signupFullName').value.trim();
         const username = document.getElementById('signupUsername').value.trim();
@@ -100,12 +100,14 @@ BarangayManager.prototype.handleUserSignup = function() {
         };
         const existingResidentIndex = this.residents.findIndex(resident => resident.name.toLowerCase() === fullName.toLowerCase());
 
-        this.users.push(newUser);
+        const savedUser = await this.persistRecord('users', newUser);
+        if (!savedUser) return;
+        this.users.push(savedUser);
         if (existingResidentIndex > -1) {
             const existingResident = this.residents[existingResidentIndex];
-            this.residents[existingResidentIndex] = {
+            const residentRecord = {
                 ...existingResident,
-                userId,
+                userId: savedUser.id,
                 name: fullName,
                 age: existingResident.age || this.calculateAge(birthdate),
                 gender: existingResident.gender || gender,
@@ -119,10 +121,13 @@ BarangayManager.prototype.handleUserSignup = function() {
                 verificationNotes: existingResident.verificationNotes || '',
                 verifiedAt: existingResident.verifiedAt || ''
             };
+            const savedResident = await this.persistRecord('residents', residentRecord);
+            if (!savedResident) return;
+            this.residents[existingResidentIndex] = savedResident;
         } else {
-            this.residents.push({
-                id: userId,
-                userId,
+            const residentRecord = {
+                id: savedUser.id,
+                userId: savedUser.id,
                 name: fullName,
                 age: this.calculateAge(birthdate),
                 gender,
@@ -137,11 +142,14 @@ BarangayManager.prototype.handleUserSignup = function() {
                 verificationScheduleTime: '',
                 verificationNotes: '',
                 verifiedAt: ''
-            });
+            };
+            const savedResident = await this.persistRecord('residents', residentRecord);
+            if (!savedResident) return;
+            this.residents.push(savedResident);
         }
         this.saveToStorage('users', this.users);
         this.saveToStorage('residents', this.residents);
-        this.logActivity('signup', fullName, `New resident account created with username ${username}.`);
+        await this.logActivity('signup', fullName, `New resident account created with username ${username}.`);
         this.updateDashboard();
         document.getElementById('signupForm').reset();
         successEl.textContent = 'Account created. You can now log in.';

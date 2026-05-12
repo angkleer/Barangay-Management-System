@@ -27,31 +27,29 @@ BarangayManager.prototype.renderAnnouncements = function() {
     }
 
 
-BarangayManager.prototype.saveAnnouncement = function() {
-        const id = document.getElementById('announcementId').value || Date.now();
-        const announcement = {
-            id: parseInt(id),
-            title: document.getElementById('announcementTitle').value,
-            content: document.getElementById('announcementContent').value
-        };
-
-        const index = this.announcements.findIndex(a => a.id === parseInt(id));
+BarangayManager.prototype.saveAnnouncement = async function() {
+        const rawId = document.getElementById('announcementId').value;
+        const id = rawId ? parseInt(rawId, 10) : Date.now();
+        const title = document.getElementById('announcementTitle').value.trim();
+        const content = document.getElementById('announcementContent').value.trim();
+        const index = this.announcements.findIndex(a => a.id === id);
         const isExisting = index > -1;
-        if (index > -1) {
-            this.announcements[index] = announcement;
+        const savedAnnouncement = await this.persistRecord('announcements', { id, title, content });
+        if (!savedAnnouncement) return;
+
+        if (isExisting) {
+            this.announcements[index] = savedAnnouncement;
         } else {
-            this.announcements.push(announcement);
+            this.announcements.push(savedAnnouncement);
         }
 
         this.saveToStorage('announcements', this.announcements);
-        this.logActivity(
+        await this.logActivity(
             isExisting ? 'announcement-update' : 'announcement-create',
-            announcement.title,
+            savedAnnouncement.title,
             isExisting ? 'Announcement updated.' : 'New announcement posted.'
         );
-        this.renderAnnouncements();
-        this.renderPublicAnnouncements();
-        this.updateDashboard();
+        this.refreshViewsAfterDataChange('announcements');
         this.closeAllModals();
     }
 
@@ -65,15 +63,14 @@ BarangayManager.prototype.editAnnouncement = function(id) {
     }
 
 
-BarangayManager.prototype.deleteAnnouncement = function(id) {
+BarangayManager.prototype.deleteAnnouncement = async function(id) {
         if (confirm('Delete this announcement?')) {
             const announcement = this.announcements.find(a => a.id === id);
-            this.announcements = this.announcements.filter(a => a.id !== id);
-            this.saveToStorage('announcements', this.announcements);
-            if (announcement) this.logActivity('announcement-delete', announcement.title, 'Announcement deleted.');
-            this.renderAnnouncements();
-            this.renderPublicAnnouncements();
-            this.updateDashboard();
+            const removed = await this.removeRecord('announcements', id);
+            if (!removed) return;
+            this.deleteCollectionItem('announcements', id);
+            if (announcement) await this.logActivity('announcement-delete', announcement.title, 'Announcement deleted.');
+            this.refreshViewsAfterDataChange('announcements');
         }
     }
 

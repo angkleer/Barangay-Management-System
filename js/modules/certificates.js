@@ -37,7 +37,7 @@ BarangayManager.prototype.renderCertificates = function() {
     }
 
 
-BarangayManager.prototype.saveCertificate = function() {
+BarangayManager.prototype.saveCertificate = async function() {
         const id = document.getElementById('certificateId').value || Date.now();
         const residentSelect = document.getElementById('certificateResident');
         const residentName = residentSelect.options[residentSelect.selectedIndex].dataset.name;
@@ -53,20 +53,21 @@ BarangayManager.prototype.saveCertificate = function() {
 
         const index = this.certificates.findIndex(c => c.id === parseInt(id));
         const isExisting = index > -1;
+        const savedCertificate = await this.persistRecord('certificates', certificate);
+        if (!savedCertificate) return;
         if (index > -1) {
-            this.certificates[index] = certificate;
+            this.certificates[index] = savedCertificate;
         } else {
-            this.certificates.push(certificate);
+            this.certificates.push(savedCertificate);
         }
 
         this.saveToStorage('certificates', this.certificates);
-        this.logActivity(
+        await this.logActivity(
             isExisting ? 'certificate-update' : 'certificate-create',
             residentName,
-            `${isExisting ? 'Updated' : 'Created'} ${certificate.type} request.`
+            `${isExisting ? 'Updated' : 'Created'} ${savedCertificate.type} request.`
         );
-        this.renderCertificates();
-        this.updateDashboard();
+        this.refreshViewsAfterDataChange('certificates');
         this.closeAllModals();
     }
 
@@ -82,14 +83,14 @@ BarangayManager.prototype.editCertificate = function(id) {
     }
 
 
-BarangayManager.prototype.deleteCertificate = function(id) {
+BarangayManager.prototype.deleteCertificate = async function(id) {
         if (confirm('Delete this certificate request?')) {
             const certificate = this.certificates.find(c => c.id === id);
-            this.certificates = this.certificates.filter(c => c.id !== id);
-            this.saveToStorage('certificates', this.certificates);
-            if (certificate) this.logActivity('certificate-delete', certificate.residentName, `${certificate.type} request deleted.`);
-            this.renderCertificates();
-            this.updateDashboard();
+            const removed = await this.removeRecord('certificates', id);
+            if (!removed) return;
+            this.deleteCollectionItem('certificates', id);
+            if (certificate) await this.logActivity('certificate-delete', certificate.residentName, `${certificate.type} request deleted.`);
+            this.refreshViewsAfterDataChange('certificates');
         }
     }
 
