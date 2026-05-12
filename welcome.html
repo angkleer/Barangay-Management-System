@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barangay Biasong Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="welcomePage" class="page active">
+        <div class="welcome-shell">
+            <section class="welcome-hero-card">
+                <div class="welcome-copy">
+                    <p class="welcome-kicker">Barangay Biasong</p>
+                    <h1>Welcome to the Barangay Management System</h1>
+                    <p>Access barangay services from one organized portal through a cleaner and more focused resident experience.</p>
+                    <div class="welcome-actions">
+                        <button type="button" id="openLoginBtn" class="btn btn-primary">
+                            <i class="fas fa-right-to-bracket"></i> Login
+                        </button>
+                        <button type="button" id="openSignupBtn" class="btn btn-secondary">
+                            <i class="fas fa-user-plus"></i> Signup
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="welcome-announcements-card">
+                <div class="welcome-section-heading">
+                    <div>
+                        <p class="welcome-kicker">Barangay Updates</p>
+                        <h2>Announcement Board</h2>
+                    </div>
+                </div>
+                <div id="publicAnnouncementFeed" class="public-announcements-grid"></div>
+            </section>
+        </div>
+    </div>
+
+    <script src="script.js?v=20260506-1700"></script>
+</body>
+</html>

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barangay Biasong Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Main App -->
+    <div id="app" class="app hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-home"></i> BBMS</h2>
+                <span id="adminName" class="admin-name"></span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" data-page="dashboard" class="nav-item active admin-only">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="#" data-page="user-dashboard" class="nav-item active resident-only">
+                    <i class="fas fa-user-circle"></i> My Dashboard
+                </a>
+                <a href="#" data-page="residents" class="nav-item admin-only">
+                    <i class="fas fa-users"></i> Residents
+                </a>
+                <a href="#" data-page="certificates" class="nav-item admin-only">
+                    <i class="fas fa-certificate"></i> Certificates
+                </a>
+                <a href="#" data-page="blotter" class="nav-item admin-only">
+                    <i class="fas fa-file-alt"></i> Blotter
+                </a>
+                <a href="#" data-page="appointments" class="nav-item admin-only">
+                    <i class="fas fa-calendar"></i> Appointments
+                </a>
+                <a href="#" data-page="announcements" class="nav-item admin-only">
+                    <i class="fas fa-bullhorn"></i> Announcements
+                </a>
+
+                <a href="#" data-page="reports" class="nav-item admin-only">
+                    <i class="fas fa-chart-bar"></i> Reports
+                </a>
+                <button id="logoutBtn" class="nav-item logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard -->
+            <div id="dashboard" class="page active admin-only">
+                <header class="page-header">
+                    <div>
+                        <h1>Dashboard</h1>
+                        <p class="page-subtitle">Admin overview for resident records, requests, schedules, and postings.</p>
+                    </div>
+                </header>
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <h3 id="totalResidents">0</h3>
+                            <span>Total Residents</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h3 id="pendingRequests">0</h3>
+                            <span>Pending Requests</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <h3 id="approvedCerts">0</h3>
+                            <span>Approved Certificates</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-calendar"></i>
+                        <div>
+                            <h3 id="totalAppointments">0</h3>
+                            <span>Appointments</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-file-alt"></i>
+                        <div>
+                            <h3 id="totalBlotters">0</h3>
+                            <span>Blotter Records</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-dashboard-layout">
+                    <section class="info-panel">
+                        <div class="panel-heading">
+                            <h2>Quick Actions</h2>
+                            <span>Open the main admin functions directly</span>
+                        </div>
+                        <div class="admin-action-grid">
+                            <button type="button" class="admin-action-card" data-page-shortcut="residents">
+                                <i class="fas fa-users"></i>
+                                <strong>Residents</strong>
+                                <span>Manage barangay resident records</span>
+                            </button>
+                            <button type="button" class="admin-action-card" data-page-shortcut="certificates">
+                                <i class="fas fa-certificate"></i>
+                                <strong>Certificates</strong>
+                                <span>Review and encode certificate requests</span>
+                            </button>
+                            <button type="button" class="admin-action-card" data-page-shortcut="blotter">
+                                <i class="fas fa-file-alt"></i>
+                                <strong>Blotter</strong>
+                                <span>Track complaints and case status</span>
+                            </button>
+                            <button type="button" class="admin-action-card" data-page-shortcut="appointments">
+                                <i class="fas fa-calendar"></i>
+                                <strong>Appointments</strong>
+                                <span>Schedule and update resident visits</span>
+                            </button>
+                            <button type="button" class="admin-action-card" data-page-shortcut="announcements">
+                                <i class="fas fa-bullhorn"></i>
+                                <strong>Announcements</strong>
+                                <span>Post advisories and community notices</span>
+                            </button>
+                            <button type="button" class="admin-action-card" data-page-shortcut="reports">
+                                <i class="fas fa-chart-bar"></i>
+                                <strong>Reports</strong>
+                                <span>View printable admin summaries</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="info-panel">
+                        <div class="panel-heading">
+                            <h2>Latest Certificates</h2>
+                            <span>Most recent requests and approvals</span>
+                        </div>
+                        <div id="adminCertificateFeed" class="info-list"></div>
+                    </section>
+
+                    <section class="info-panel">
+                        <div class="panel-heading">
+                            <h2>Upcoming Appointments</h2>
+                            <span>Next resident visits to prepare for</span>
+                        </div>
+                        <div id="adminAppointmentFeed" class="info-list"></div>
+                    </section>
+
+                    <section class="info-panel">
+                        <div class="panel-heading">
+                            <h2>Recent Announcements</h2>
+                            <span>Latest community posts from the admin panel</span>
+                        </div>
+                        <div id="adminAnnouncementFeed" class="info-list"></div>
+                    </section>
+
+                    <section class="info-panel">
+                        <div class="panel-heading">
+                            <h2>Recent Activity</h2>
+                            <span>New signups and latest system actions</span>
+                        </div>
+                        <div id="adminActivityFeed" class="info-list"></div>
+                    </section>
+                </div>
+            </div>
+
+            <div id="user-dashboard" class="page resident-only active">
+                <header class="page-header">
+                    <div>
+                        <h1>My Dashboard</h1>
+                        <p class="page-subtitle">Resident services, request tracking, and barangay updates for your account.</p>
+                    </div>
+                </header>
+
+                <section class="resident-home-hero">
+                    <div class="resident-home-copy">
+                        <p class="resident-home-eyebrow">Resident Portal</p>
+                        <h2 id="userWelcomeHeading">Welcome</h2>
+                        <p>Submit requests, check your own records, and stay informed with barangay announcements.</p>
+                    </div>
+                    <div class="resident-profile-card">
+                        <span class="resident-profile-label">Verification Status</span>
+                        <strong id="userVerificationStatus">Verified</strong>
+                        <span id="userVerificationSchedule" class="resident-profile-handle">Barangay identity confirmed</span>
+                        <span id="userProfileUsername" class="resident-profile-handle">@resident</span>
+                    </div>
+                </section>
+
+                <section id="userVerificationNotice" class="user-verification-alert hidden">
+                    <div class="verification-alert-icon">
+                        <i class="fas fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <h2 id="userVerificationNoticeTitle">Account Needs Verification</h2>
+                        <p id="userVerificationNoticeText">Your account is newly registered. Please wait for barangay verification before full processing of your requests.</p>
+                    </div>
+                </section>
+
+                <section class="user-panel user-action-panel">
+                    <div class="panel-heading">
+                        <h2>Resident Services</h2>
+                        <span id="userServicePanelLead">Actions available for your account</span>
+                    </div>
+                    <div id="userServiceActionGrid" class="resident-action-grid">
+                        <button type="button" class="resident-action-card" data-user-action="certificate">
+                            <i class="fas fa-file-signature"></i>
+                            <strong>Request Document</strong>
+                            <span>Submit a barangay certificate or clearance request.</span>
+                        </button>
+                        <button type="button" class="resident-action-card" data-user-action="appointment">
+                            <i class="fas fa-calendar-check"></i>
+                            <strong>Book Appointment</strong>
+                            <span>Schedule your visit to the barangay office.</span>
+                        </button>
+                        <button type="button" class="resident-action-card" data-user-action="concern">
+                            <i class="fas fa-comment-dots"></i>
+                            <strong>Report Concern</strong>
+                            <span>Send a concern or incident for review.</span>
+                        </button>
+                    </div>
+                </section>
+
+                <div class="user-home-grid">
+                    <article class="user-home-card user-home-highlight">
+                        <div class="user-home-card-icon">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <div>
+                            <h3 id="userCertificateCount">0</h3>
+                            <span>Your Requests</span>
+                        </div>
+                    </article>
+                    <article class="user-home-card">
+                        <div class="user-home-card-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <h3 id="userUpcomingAppointments">0</h3>
+                            <span>Your Appointments</span>
+                        </div>
+                    </article>
+                    <article class="user-home-card">
+                        <div class="user-home-card-icon">
+                            <i class="fas fa-comment-dots"></i>
+                        </div>
+                        <div>
+                            <h3 id="userConcernCount">0</h3>
+                            <span>Your Concerns</span>
+                        </div>
+                    </article>
+                    <article class="user-home-card">
+                        <div class="user-home-card-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div>
+                            <h3 id="userProfileContact">-</h3>
+                            <span>Your Contact</span>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="user-home-layout">
+                    <section class="user-panel">
+                        <div class="panel-heading">
+                            <h2>My Requests</h2>
+                            <span>Your certificate records only</span>
+                        </div>
+                        <div id="userCertificateFeed" class="info-list"></div>
+                    </section>
+
+                    <section class="user-panel">
+                        <div class="panel-heading">
+                            <h2>My Appointments</h2>
+                            <span>Your upcoming barangay schedules</span>
+                        </div>
+                        <div id="userAppointmentFeed" class="info-list"></div>
+                    </section>
+                </div>
+
+                <div class="user-home-layout">
+                    <section class="user-panel">
+                        <div class="panel-heading">
+                            <h2>Barangay Announcements</h2>
+                            <span>Public notices for all residents</span>
+                        </div>
+                        <div id="userAnnouncementFeed" class="info-list"></div>
+                    </section>
+
+                    <section class="user-panel">
+                        <div class="panel-heading">
+                            <h2>My Information</h2>
+                            <span>Registered resident details</span>
+                        </div>
+                        <div class="user-account-grid">
+                            <div class="user-account-item">
+                                <strong>Full Name:</strong>
+                                <span id="userProfileFullName">-</span>
+                            </div>
+                            <div class="user-account-item">
+                                <strong>Username:</strong>
+                                <span id="userProfileUsernameDetail">-</span>
+                            </div>
+                            <div class="user-account-item">
+                                <strong>Contact:</strong>
+                                <span id="userProfileContactDetail">-</span>
+                            </div>
+                            <div class="user-account-item">
+                                <strong>Address:</strong>
+                                <span id="userProfileAddress">-</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="user-home-layout">
+                    <section class="user-panel">
+                        <div class="panel-heading">
+                            <h2>My Concerns</h2>
+                            <span>Reports you submitted</span>
+                        </div>
+                        <div id="userConcernFeed" class="info-list"></div>
+                    </section>
+
+                    <section class="user-panel">
+                        <div class="panel-heading">
+                            <h2>Before You Visit</h2>
+                            <span>Resident reminders</span>
+                        </div>
+                        <div id="userReminderFeed" class="info-list"></div>
+                    </section>
+                </div>
+            </div>
+            <!-- Residents -->
+            <div id="residents" class="page admin-only">
+                <header class="page-header">
+                    <h1>Resident Management</h1>
+                    <button class="btn btn-primary" data-modal="residentModal">
+                        <i class="fas fa-plus"></i> Add Resident
+                    </button>
+                </header>
+                <div class="search-container">
+                    <input type="text" id="residentSearch" placeholder="Search residents...">
+                </div>
+                <div class="table-container">
+                    <table id="residentsTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Address</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Verification</th>
+                                <th>Scheduled Visit</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Certificates -->
+            <div id="certificates" class="page admin-only">
+                <header class="page-header">
+                    <h1>Certificate Requests</h1>
+                    <button class="btn btn-primary" data-modal="certificateModal">
+                        <i class="fas fa-plus"></i> New Request
+                    </button>
+                </header>
+                <div class="search-container">
+                    <input type="text" id="certificateSearch" placeholder="Search certificate requests...">
+                </div>
+                <div class="table-container">
+                    <table id="certificatesTable">
+                        <thead>
+                            <tr>
+                                <th>Resident</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Blotter -->
+            <div id="blotter" class="page admin-only">
+                <header class="page-header">
+                    <h1>Blotter Management</h1>
+                    <button class="btn btn-primary" data-modal="blotterModal">
+                        <i class="fas fa-plus"></i> New Blotter
+                    </button>
+                </header>
+                <div class="search-container">
+                    <input type="text" id="blotterSearch" placeholder="Search blotter records...">
+                </div>
+                <div class="table-container">
+                    <table id="blotterTable">
+                        <thead>
+                            <tr>
+                                <th>Complainant</th>
+                                <th>Respondent</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Appointments -->
+            <div id="appointments" class="page admin-only">
+                <header class="page-header">
+                    <h1>Appointments</h1>
+                    <button class="btn btn-primary" data-modal="appointmentModal">
+                        <i class="fas fa-plus"></i> New Appointment
+                    </button>
+                </header>
+                <div class="search-container">
+                    <input type="text" id="appointmentSearch" placeholder="Search appointments...">
+                </div>
+                <div class="table-container">
+                    <table id="appointmentsTable">
+                        <thead>
+                            <tr>
+                                <th>Resident</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Purpose</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Announcements -->
+            <div id="announcements" class="page admin-only">
+                <header class="page-header">
+                    <h1>Announcements</h1>
+                    <button class="btn btn-primary" data-modal="announcementModal">
+                        <i class="fas fa-plus"></i> New Announcement
+                    </button>
+                </header>
+                <div class="announcements-grid"></div>
+            </div>
+
+            <!-- Reports -->
+            <div id="reports" class="page admin-only">
+                <header class="page-header">
+                    <h1>Reports</h1>
+                </header>
+                <div class="reports-tabs">
+                    <button class="tab-btn active" data-tab="residents-report">Residents</button>
+                    <button class="tab-btn" data-tab="certificates-report">Certificates</button>
+                    <button class="tab-btn" data-tab="blotter-report">Blotter</button>
+                    <button class="tab-btn" data-tab="appointments-report">Appointments</button>
+                </div>
+                <div id="residents-report" class="tab-content active">
+                    <div class="table-container">
+                        <table id="residentsReportTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Age</th>
+                                    <th>Gender</th>
+                                    <th>Address</th>
+                                    <th>Contact</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="certificates-report" class="tab-content">
+                    <!-- Similar structure for other reports -->
+                    <div class="table-container">
+                        <table id="certificatesReportTable">
+                            <thead>
+                                <tr>
+                                    <th>Resident</th>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="blotter-report" class="tab-content">
+                    <div class="table-container">
+                        <table id="blotterReportTable">
+                            <thead>
+                                <tr>
+                                    <th>Complainant</th>
+                                    <th>Respondent</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="appointments-report" class="tab-content">
+                    <div class="table-container">
+                        <table id="appointmentsReportTable">
+                            <thead>
+                                <tr>
+                                    <th>Resident</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Purpose</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modals">
+        <!-- Resident Modal -->
+        <div id="residentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="residentModalTitle">Add Resident</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <form id="residentForm">
+                    <input type="hidden" id="residentId">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="residentName" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Age</label>
+                        <input type="number" id="residentAge" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Gender</label>
+                        <select id="residentGender" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Birthdate</label>
+                        <input type="date" id="residentBirthdate">
+                    </div>
+                    <div class="input-group">
+                        <label>Civil Status</label>
+                        <select id="residentCivilStatus">
+                            <option value="">Select Status</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Widowed">Widowed</option>
+                            <option value="Divorced">Divorced</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Address</label>
+                        <input type="text" id="residentAddress" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Contact Number</label>
+                        <input type="tel" id="residentContact" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Occupation</label>
+                        <input type="text" id="residentOccupation">
+                    </div>
+                    <div class="input-group">
+                        <label>Resident Status</label>
+                        <select id="residentStatus" required>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Account Verification</label>
+                        <select id="residentVerificationStatus">
+                            <option value="pending">Pending Verification</option>
+                            <option value="scheduled">Scheduled for Verification</option>
+                            <option value="verified">Verified</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Verification Date</label>
+                        <input type="date" id="residentVerificationDate">
+                    </div>
+                    <div class="input-group">
+                        <label>Verification Time</label>
+                        <input type="time" id="residentVerificationTime">
+                    </div>
+                    <div class="input-group">
+                        <label>Verification Notes</label>
+                        <textarea id="residentVerificationNotes" rows="3" placeholder="Document check notes and identity verification remarks"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Certificate Modal -->
+        <div id="certificateModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="certificateModalTitle">New Certificate Request</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <form id="certificateForm">
+                    <input type="hidden" id="certificateId">
+                    <div class="input-group">
+                        <label>Resident Name</label>
+                        <select id="certificateResident" required>
+                            <option value="">Select Resident</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Certificate Type</label>
+                        <select id="certificateType" required>
+                            <option value="">Select Type</option>
+                            <option value="Barangay Clearance">Barangay Clearance</option>
+                            <option value="Certificate of Residency">Certificate of Residency</option>
+                            <option value="Indigency Certificate">Indigency Certificate</option>
+                            <option value="Business Clearance">Business Clearance</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Request Date</label>
+                        <input type="date" id="certificateDate" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Status</label>
+                        <select id="certificateStatus" required>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Released">Released</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Similar modals for blotter, appointment, announcement would go here -->
+        <!-- Blotter Modal -->
+        <div id="blotterModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="blotterModalTitle">New Blotter Record</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <form id="blotterForm">
+                    <input type="hidden" id="blotterId">
+                    <div class="input-group">
+                        <label>Complainant</label>
+                        <input type="text" id="blotterComplainant" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Respondent</label>
+                        <input type="text" id="blotterRespondent" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Incident Date</label>
+                        <input type="date" id="blotterDate" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Description</label>
+                        <textarea id="blotterDescription" required></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Status</label>
+                        <select id="blotterStatus" required>
+                            <option value="Open">Open</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Appointment Modal -->
+        <div id="appointmentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="appointmentModalTitle">New Appointment</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <form id="appointmentForm">
+                    <input type="hidden" id="appointmentId">
+                    <div class="input-group">
+                        <label>Resident Name</label>
+                        <select id="appointmentResident" required>
+                            <option value="">Select Resident</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Date</label>
+                        <input type="date" id="appointmentDate" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Time</label>
+                        <input type="time" id="appointmentTime" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Purpose</label>
+                        <input type="text" id="appointmentPurpose" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Status</label>
+                        <select id="appointmentStatus" required>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Announcement Modal -->
+        <div id="announcementModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="announcementModalTitle">New Announcement</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <form id="announcementForm">
+                    <input type="hidden" id="announcementId">
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" id="announcementTitle" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Content</label>
+                        <textarea id="announcementContent" required></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Publish</button>
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=20260506-1700"></script>
+</body>
+</html>
+
+
+
+
