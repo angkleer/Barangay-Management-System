@@ -30,6 +30,33 @@ BarangayManager.prototype.getTableNameForKey = function(key) {
     }
 
 
+BarangayManager.prototype.getNullableDateFieldsForKey = function(key) {
+        const map = {
+            users: ['birthdate', 'verificationScheduleDate', 'verifiedAt'],
+            residents: ['birthdate', 'verificationScheduleDate', 'verifiedAt']
+        };
+
+        return map[key] || [];
+    }
+
+
+BarangayManager.prototype.sanitizeRecordForSupabase = function(key, record) {
+        if (!record || typeof record !== 'object') return record;
+
+        const nullableDateFields = this.getNullableDateFieldsForKey(key);
+        if (!nullableDateFields.length) return record;
+
+        const sanitized = { ...record };
+        nullableDateFields.forEach(field => {
+            if (sanitized[field] === '') {
+                sanitized[field] = null;
+            }
+        });
+
+        return sanitized;
+    }
+
+
 BarangayManager.prototype.normalizeRecord = function(record) {
         if (!record || typeof record !== 'object') return record;
 
@@ -86,8 +113,9 @@ BarangayManager.prototype.loadAllData = async function() {
 
 BarangayManager.prototype.persistRecord = async function(key, record) {
         const normalizedRecord = this.normalizeRecord({ ...record });
+        const sanitizedRecord = this.sanitizeRecordForSupabase(key, normalizedRecord);
         const client = this.getSupabaseClient();
-        const hasExistingId = normalizedRecord.id !== undefined && normalizedRecord.id !== null && normalizedRecord.id !== '';
+        const hasExistingId = sanitizedRecord.id !== undefined && sanitizedRecord.id !== null && sanitizedRecord.id !== '';
 
         if (!client && this.requiresSupabase()) {
             this.reportDataError(`save ${key}`, new Error('Supabase client is not available.'));
@@ -101,14 +129,14 @@ BarangayManager.prototype.persistRecord = async function(key, record) {
                 if (hasExistingId) {
                     result = await client
                         .from(this.getTableNameForKey(key))
-                        .upsert(normalizedRecord)
+                        .upsert(sanitizedRecord)
                         .select()
                         .single();
                 } else {
-                    delete normalizedRecord.id;
+                    delete sanitizedRecord.id;
                     result = await client
                         .from(this.getTableNameForKey(key))
-                        .insert(normalizedRecord)
+                        .insert(sanitizedRecord)
                         .select()
                         .single();
                 }
@@ -127,10 +155,10 @@ BarangayManager.prototype.persistRecord = async function(key, record) {
         }
 
         if (!hasExistingId) {
-            delete normalizedRecord.id;
+            delete sanitizedRecord.id;
         }
 
-        return normalizedRecord;
+        return sanitizedRecord;
     }
 
 
