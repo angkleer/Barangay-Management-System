@@ -175,6 +175,11 @@ BarangayManager.prototype.saveResident = async function() {
             return;
         }
 
+        if (verificationStatus === 'scheduled' && !verificationScheduleTime) {
+            alert('Please select a verification time before saving a scheduled verification.');
+            return;
+        }
+
         if (verificationStatus === 'pending' && verificationScheduleDate) {
             verificationStatus = 'scheduled';
         }
