@@ -73,7 +73,14 @@ BarangayManager.prototype.normalizeRecord = function(record) {
 
 BarangayManager.prototype.reportDataError = function(action, error) {
         console.error(`Supabase failed to ${action}:`, error);
-        alert(`Supabase could not ${action}: ${error.message}`);
+        const rawMessage = error?.message || 'Unknown error.';
+        const isNetworkFailure = error?.code === 'FETCH_ERROR'
+            || /failed to fetch/i.test(rawMessage)
+            || /network request failed/i.test(rawMessage);
+        const message = isNetworkFailure
+            ? `Supabase could not ${action}: Cannot reach the Supabase server. Check your internet connection, DNS, firewall, and Supabase URL settings.`
+            : `Supabase could not ${action}: ${rawMessage}`;
+        alert(message);
     }
 
 
