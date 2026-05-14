@@ -30,10 +30,10 @@ BarangayManager.prototype.getTableNameForKey = function(key) {
     }
 
 
-BarangayManager.prototype.getNullableDateFieldsForKey = function(key) {
+BarangayManager.prototype.getNullableTemporalFieldsForKey = function(key) {
         const map = {
-            users: ['birthdate', 'verificationScheduleDate', 'verifiedAt'],
-            residents: ['birthdate', 'verificationScheduleDate', 'verifiedAt']
+            users: ['birthdate', 'verificationScheduleDate', 'verificationScheduleTime', 'verifiedAt'],
+            residents: ['birthdate', 'verificationScheduleDate', 'verificationScheduleTime', 'verifiedAt']
         };
 
         return map[key] || [];
@@ -43,11 +43,11 @@ BarangayManager.prototype.getNullableDateFieldsForKey = function(key) {
 BarangayManager.prototype.sanitizeRecordForSupabase = function(key, record) {
         if (!record || typeof record !== 'object') return record;
 
-        const nullableDateFields = this.getNullableDateFieldsForKey(key);
-        if (!nullableDateFields.length) return record;
+        const nullableTemporalFields = this.getNullableTemporalFieldsForKey(key);
+        if (!nullableTemporalFields.length) return record;
 
         const sanitized = { ...record };
-        nullableDateFields.forEach(field => {
+        nullableTemporalFields.forEach(field => {
             if (sanitized[field] === '') {
                 sanitized[field] = null;
             }
