@@ -80,6 +80,12 @@ BarangayManager.prototype.handleUserSignup = async function() {
             errorEl.textContent = 'Email address is already registered.';
             return;
         }
+
+        if (!birthdate) {
+            errorEl.textContent = 'Please select your birthdate.';
+            return;
+        }
+
         const newUser = {
             fullName,
             username,
